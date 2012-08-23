@@ -1,5 +1,11 @@
 package thejh.mcadmin;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.LinkedList;
 
 import android.app.Activity;
@@ -20,11 +26,24 @@ import android.widget.TextView;
 
 public class KickswordActivity extends Activity {
 	private ArrayAdapter<String> adapter;
-	private static LinkedList<String> targets = new LinkedList<String>();
+	private LinkedList<String> targets = new LinkedList<String>();
 	
 	private SensorManager sm;
 	private SensorEventListener ac_l;
 	private SensorEventListener cp_l;
+	
+	private void write_targets_file() {
+		try {
+			BufferedWriter out = new BufferedWriter(new OutputStreamWriter(openFileOutput("saved_angles", 0)));
+			for (String line: targets) {
+				out.write(line+"\n");
+			}
+			out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
 	
 	/** Called when the activity is first created. */
     @Override
@@ -38,9 +57,23 @@ public class KickswordActivity extends Activity {
         mListView.setOnItemLongClickListener(new OnItemLongClickListener() {
         	public boolean onItemLongClick(AdapterView<?> parent, View v, int position, long id) {
         		adapter.remove(targets.get(position));
+        		write_targets_file();
 				return true;
 			}
 		});
+        
+        try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(openFileInput("saved_angles")));
+			String line;
+			while ((line = in.readLine()) != null) {
+				if (!line.equals("")) adapter.add(line);
+			}
+			in.close();
+		} catch (FileNotFoundException e) {
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
         
         sm = (SensorManager) getSystemService(SENSOR_SERVICE);
     }
@@ -119,5 +152,6 @@ public class KickswordActivity extends Activity {
     
     public void add_user(View view) {
     	adapter.add(getETString(R.id.angle)+" "+getETString(R.id.user));
+    	write_targets_file();
     }
 }
