@@ -20,6 +20,8 @@
             </intent-filter>
         </activity>
         <activity android:name="LoginActivity" android:exported="false"></activity>
+        <activity android:name="SelectPlayerActivity" android:exported="false"></activity>
+        <activity android:name="KickswordActivity" android:exported="false"></activity>
     </application>
 
 </manifest>

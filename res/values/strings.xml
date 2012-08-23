@@ -12,5 +12,21 @@
     <string name="foobar">Foobar</string>
     <string name="send">send</string>
     <string name="password">password</string>
+    <string name="ban">ban</string>
+    <string name="kick">kick</string>
+    <string name="unban">unban</string>
+    <string name="pardon">pardon</string>
+    <string name="ban_ip">ban-ip</string>
+    <string name="pardon_ip">pardon-ip</string>
+    <string name="op">op</string>
+    <string name="deop">deop</string>
+    <string name="teleport">tp</string>
+    <string name="creative">creative</string>
+    <string name="survival">survival</string>
+    <string name="select_player">Please select a player.</string>
+    <string name="placeholder">...</string>
+    <string name="kicksword">kicksword</string>
+    <string name="angle">angle</string>
+    <string name="add">add</string>
 
 </resources>

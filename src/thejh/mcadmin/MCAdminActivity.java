@@ -3,8 +3,11 @@ package thejh.mcadmin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.Socket;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -31,6 +34,8 @@ public class MCAdminActivity extends Activity {
 	private Handler h;
 	private int req_id = 0;
 	private boolean dead = false;
+	private String pending_action;
+	private NamesListener on_names;
 	
 	/** Called when the activity is first created. */
     @Override
@@ -110,7 +115,7 @@ public class MCAdminActivity extends Activity {
     		final String host = data.getStringExtra("host");
     		String sport = data.getStringExtra("port");
     		final String pass = data.getStringExtra("pass");
-    		if (resultCode != 0 || host==null || sport==null || pass==null) {
+    		if (host==null || sport==null || pass==null) {
     			finish();
     			return;
     		}
@@ -134,6 +139,27 @@ public class MCAdminActivity extends Activity {
     				}
     			}
     		}.start();
+    	} else if (requestCode == 2 && resultCode == 42) {
+    		String method_to_run = data.getStringExtra("nextstep");
+    		Method m = null;
+    		try {
+				m = MCAdminActivity.class.getMethod(method_to_run, Intent.class);
+			} catch (NoSuchMethodException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+    		try {
+				m.invoke(this, data);
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+				System.exit(1);
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+				System.exit(1);
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
     	}
     }
     
@@ -149,6 +175,17 @@ public class MCAdminActivity extends Activity {
 			log.append("login successful\n");
 			logged_in = true;
 			return;
+		}
+		if (on_names != null && payload.startsWith("Connected players:")) {
+			Log.d("MC", "got automatically requested names list");
+			ArrayList<String> names = new ArrayList<String>();
+			for (String name: payload.split(":")[1].split(",")) {
+				name = name.trim();
+				if (name.equals("")) continue;
+				names.add(name);
+			}
+			on_names.run(names);
+			on_names = null;
 		}
 		log.append(payload + (payload.endsWith("\n") ? "" : "\n"));
     }
@@ -212,5 +249,78 @@ public class MCAdminActivity extends Activity {
 				}
     		}
     	}
+    }
+    
+    private void select_player(final String nextstep, final String text) {
+    	on_names = new NamesListener() {
+			public void run(ArrayList<String> names) {
+				Intent i = new Intent(self, SelectPlayerActivity.class);
+				i.putExtra("names", names.toArray(new String[]{}));
+				i.putExtra("text", text);
+				i.putExtra("nextstep", nextstep);
+				startActivityForResult(i, 2);
+			}
+		};
+    	send_message("list");
+    }
+    
+    private String teleport_user_1;
+    public void teleport(View view) {
+    	select_player("teleport_select_dst", "Please choose who should be teleported.");
+    }
+    public void teleport_select_dst(Intent i) {
+    	teleport_user_1 = i.getStringExtra("player");
+    	select_player("teleport_do", "Please choose to whom "+teleport_user_1+" should be teleported.");
+    }
+    public void teleport_do(Intent i) {
+    	send_message("tp "+teleport_user_1+" "+i.getStringExtra("player"));
+    }
+    
+    public void kick(View view) {
+    	select_player("kick_do", "Please choose which player should be kicked.");
+    }
+    public void kick_do(Intent i) {
+    	send_message("kick "+i.getStringExtra("player"));
+    }
+    public void ban(View view) {
+    	select_player("ban_do", "Please choose which player should be banned.");
+    }
+    public void ban_do(Intent i) {
+    	send_message("ban "+i.getStringExtra("player"));
+    }
+    
+    public void survival(View v) {
+    	select_player("survival_do", "Please choose which player should be set to gamemode 0 (survival).");
+    }
+    public void survival_do(Intent i) {
+    	send_message("gamemode "+i.getStringExtra("player")+" 0");
+    }
+    public void creative(View v) {
+    	select_player("creative_do", "Please choose which player should be set to gamemode 1 (creative).");
+    }
+    public void creative_do(Intent i) {
+    	send_message("gamemode "+i.getStringExtra("player")+" 1");
+    }
+    
+    public void op(View v) {
+    	select_player("op_do", "Please choose which player should be granted operator access.");
+    }
+    public void op_do(Intent i) {
+    	send_message("op "+i.getStringExtra("player"));
+    }
+    public void deop(View v) {
+    	select_player("deop_do", "Please choose whose operator access should be revoked.");
+    }
+    public void deop_do(Intent i) {
+    	send_message("deop "+i.getStringExtra("player"));
+    }
+    
+    public void launch_kicksword(View view) {
+    	Intent i = new Intent(this, KickswordActivity.class);
+    	startActivityForResult(i, 2);
+    }
+    
+    interface NamesListener {
+    	public void run(ArrayList<String> names);
     }
 }
