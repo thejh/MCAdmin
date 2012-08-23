@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hello">Hello World, MCAdminActivity!</string>
+    <string name="app_name">MCAdmin</string>
+    <string name="host">host</string>
+    <string name="port">port</string>
+    <string name="user">user</string>
+    <string name="login">Login</string>
+    <string name="host_hint">1.2.3.4</string>
+    <string name="port_hint">25575</string>
+    <string name="foobar">Foobar</string>
+    <string name="send">send</string>
+    <string name="password">password</string>
+
+</resources>
