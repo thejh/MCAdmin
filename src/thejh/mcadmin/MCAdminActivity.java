@@ -8,16 +8,25 @@ import java.lang.reflect.Method;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.graphics.Matrix;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -36,6 +45,10 @@ public class MCAdminActivity extends Activity {
 	private boolean dead = false;
 	private String pending_action;
 	private NamesListener on_names;
+	private LinkedList<String> angles = new LinkedList<String>();
+	private SensorManager sm;
+	private SensorEventListener cp_l;
+	private float current_angle;
 	
 	/** Called when the activity is first created. */
     @Override
@@ -45,6 +58,49 @@ public class MCAdminActivity extends Activity {
         h = new Handler(); // TODO is posting to this queue without synchronization really ok?
         Intent i = new Intent(this, LoginActivity.class);
         startActivityForResult(i, 1);
+        
+        sm = (SensorManager) getSystemService(SENSOR_SERVICE);
+        
+        Button b = (Button) findViewById(R.id.drag_drop_tp);
+        b.setOnTouchListener(new OnTouchListener() {
+        	private String drag_subject = null;
+        	
+			public boolean onTouch(View v, MotionEvent event) {
+				if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+					drag_subject = KickswordActivity.getNearestUser(angles, current_angle);
+					Log.d("MCdrag", "drag start with angle="+current_angle+" user="+drag_subject);
+					return true;
+				} else if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+					String target = KickswordActivity.getNearestUser(angles, current_angle);
+					Log.d("MCdrag", "drop with angle="+current_angle+" user="+drag_subject);
+					if (drag_subject.equals(target)) return false;
+					send_message("tp "+drag_subject+" "+target);
+					drag_subject = null;
+					return true;
+				}
+				return false;
+			}
+		});
+    }
+    
+    @Override
+    protected void onResume() {
+    	super.onResume();
+    	KickswordActivity.update_angles(angles, this);
+    	
+    	sm.registerListener(cp_l = new SensorEventListener() {
+			public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
+			public void onSensorChanged(SensorEvent event) {
+				current_angle = event.values[0];
+			}
+    	}, sm.getSensorList(Sensor.TYPE_ORIENTATION).get(0), SensorManager.SENSOR_DELAY_GAME);
+    }
+    
+    @Override
+    protected void onPause() {
+    	super.onPause();
+    	sm.unregisterListener(cp_l);
     }
     
     @Override

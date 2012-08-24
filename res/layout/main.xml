@@ -119,7 +119,14 @@
                 android:text="@string/teleport"
                 android:onClick="teleport" />
 
+            <Button
+                android:id="@+id/drag_drop_tp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/drag_drop_teleport" />
+
         </TableRow>
+
     </TableLayout>
 
 </LinearLayout>

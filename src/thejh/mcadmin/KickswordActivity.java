@@ -45,6 +45,22 @@ public class KickswordActivity extends Activity {
 		}
 	}
 	
+	static void update_angles(LinkedList<String> list, Activity a) {
+		list.clear();
+        try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(a.openFileInput("saved_angles")));
+			String line;
+			while ((line = in.readLine()) != null) {
+				if (!line.equals("")) list.add(line);
+			}
+			in.close();
+		} catch (FileNotFoundException e) {
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
+	
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,18 +78,8 @@ public class KickswordActivity extends Activity {
 			}
 		});
         
-        try {
-			BufferedReader in = new BufferedReader(new InputStreamReader(openFileInput("saved_angles")));
-			String line;
-			while ((line = in.readLine()) != null) {
-				if (!line.equals("")) adapter.add(line);
-			}
-			in.close();
-		} catch (FileNotFoundException e) {
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+        update_angles(targets, this);
+        adapter.notifyDataSetChanged();
         
         sm = (SensorManager) getSystemService(SENSOR_SERVICE);
     }
@@ -93,7 +99,7 @@ public class KickswordActivity extends Activity {
 				double tdiff = event.timestamp - lastpeak;
 				if (g_diff > 50 && tdiff > 5e9) {
 					lastpeak = event.timestamp;
-					String user = getNearestUser(current_angle);
+					String user = getNearestUser(targets, current_angle);
 					if (user == null) return;
 					Intent i = new Intent();
 					i.putExtra("nextstep", "kick_do");
@@ -117,7 +123,7 @@ public class KickswordActivity extends Activity {
     	}, sm.getSensorList(Sensor.TYPE_ORIENTATION).get(0), SensorManager.SENSOR_DELAY_GAME);
     }
     
-    private String getNearestUser(float targetAngle) {
+    static String getNearestUser(LinkedList<String> targets, float targetAngle) {
     	Log.d("MCsword", "target_angle="+targetAngle);
 		String best_fit = null;
 		float best_fit_angle_diff = 0;

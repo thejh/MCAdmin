@@ -28,5 +28,6 @@
     <string name="kicksword">kicksword</string>
     <string name="angle">angle</string>
     <string name="add">add</string>
+    <string name="drag_drop_teleport">easy tp</string>
 
 </resources>
